@@ -1,0 +1,34 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+exporters:
+  debug: {}
+  otlp/jaeger:
+    endpoint: "jaeger:4317"
+    tls:
+      insecure: true
+  logging:
+    verbosity: detailed
+  prometheus:
+    endpoint: 0.0.0.0:8889
+processors:
+  batch:
+
+service:
+  telemetry:
+    logs:
+      level: "debug"
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [logging, otlp/jaeger]
+      processors: [batch]
+    metrics:
+      receivers: [otlp]
+      exporters: [logging, prometheus]
+      processors: [batch]
+    logs:
+      receivers: [otlp]
+      exporters: [logging]
+      processors: [batch]

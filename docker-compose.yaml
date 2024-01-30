@@ -1,0 +1,57 @@
+version: "3"
+
+networks:
+  host:
+    external: true
+# 
+services:
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector-contrib
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 1888:1888
+      - 8888:8888
+      - 8889:8889
+      - 13133:13133
+      - 4317:4317
+      - 4318:4318
+      - 55679:55679
+      - 14250:14250
+    depends_on:
+      - jaeger
+      - prometheus
+      - zipkin
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=9412
+      - COLLECTOR_OTLP_ENABLED=true
+    container_name: jaeger
+    ports:
+      - "9412:9412"
+      - "16686:16686"
+      - "6831:6831/udp"
+  zipkin:
+    image: openzipkin/zipkin-slim
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin_password
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus      
